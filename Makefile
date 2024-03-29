@@ -1,2 +1,16 @@
+SHELL := /bin/bash
+
+all: build fmt
+
+build:
+	@go build
+
+fmt:
+	@go fmt
+
 run:
-	go run main.go
+	@if [ -n "$$INSIDE_EMACS" ]; then \
+	    go build; \
+	else \
+		go run main.go; \
+	fi

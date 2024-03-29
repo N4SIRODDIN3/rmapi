@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
@@ -146,8 +145,7 @@ func (ctx HttpClientCtx) httpRawReq(authType AuthType, verb, url string, reqBody
 
 	switch resp.(type) {
 	case *BodyString:
-		bodyContent, err := ioutil.ReadAll(response.Body)
-
+		bodyContent, err := io.ReadAll(response.Body)
 		if err != nil {
 			return err
 		}

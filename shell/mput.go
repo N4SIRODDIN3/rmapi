@@ -3,7 +3,6 @@ package shell
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -120,7 +119,7 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 	os.Chdir(localDir) // Change to the local source directory.
 
 	wd, _ := os.Getwd()
-	dirList, err := ioutil.ReadDir(wd)
+	dirList, err := os.ReadDir(wd)
 
 	if err != nil {
 		pC.Err(fmt.Errorf("could not read the directory: %s", wd))
@@ -135,7 +134,7 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 			continue
 		}
 
-		switch mode := d.Mode(); {
+		switch mode := d.Type(); {
 		case mode.IsDir():
 
 			// Is a directory. Create directory and make a recursive call.
