@@ -1,6 +1,6 @@
 ## rmapi master
 
-## rmapi 0.0.25 (Unreleased)
+## rmapi 0.0.25 (2024-03-29)
 
 - Remove version 1.0 of the sync API
 - Add env variable `RMAPI_CACHE_DIR`
