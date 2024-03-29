@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	cacheDirEnvVar          = "RMAPI_CACHE_DIR"
+	cacheDirEnvVar = "RMAPI_CACHE_DIR"
 )
 
 func HashEntries(entries []*Entry) (string, error) {

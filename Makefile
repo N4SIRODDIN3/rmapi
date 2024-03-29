@@ -5,8 +5,8 @@ all: build fmt
 build:
 	@go build
 
-fmt:
-	@go fmt
+format:
+	@gofmt -l -w .
 
 RMAPI_CACHE_DIR ?= $(PWD)/.run-cache
 run:

@@ -1,8 +1,8 @@
 package rm
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"testing"
 )
 
