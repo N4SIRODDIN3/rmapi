@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go 1.18
+      - name: Set up Go 1.22
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.22
         id: go
 
       - name: Check out code into the Go module directory
@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Linux binary
         run: go build -v -ldflags "-X 'github.com/juruen/rmapi/version.Version=${{ env.VERSION }}'" -o rmapi .
-        
+
 
       - name: Create tar
         run: tar czvf rmapi-linuxx86-64.tar.gz rmapi
