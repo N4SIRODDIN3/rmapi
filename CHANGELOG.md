@@ -1,11 +1,15 @@
 ## rmapi master
 
-## rmapi 0.0.25 (2024-03-29)
+## rmapi 0.0.26 (2024-03-29)
 
 - Remove version 1.0 of the sync API
 - Add env variable `RMAPI_CACHE_DIR`
 - Use go 1.22
 - Divide the cache layout per sync version (1.5).
+
+## rmapi 0.0.25 (January 1st, 2023)
+
+- Fix #285 (https://github.com/juruen/rmapi/issues/285) (@ddvk)
 
 ## rmapi 0.0.24 (December 30, 2022)
 
