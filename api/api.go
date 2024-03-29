@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/juruen/rmapi/api/sync10"
 	"github.com/juruen/rmapi/api/sync15"
 	"github.com/juruen/rmapi/filetree"
 	"github.com/juruen/rmapi/model"
@@ -91,8 +90,6 @@ func ParseToken(userToken string) (token *UserInfo, err error) {
 // CreateApiCtx initializes an instance of ApiCtx
 func CreateApiCtx(httpCtx *transport.HttpClientCtx, syncVerison SyncVersion) (ctx ApiCtx, err error) {
 	switch syncVerison {
-	case Version10:
-		return sync10.CreateCtx(httpCtx)
 	case Version15:
 		return sync15.CreateCtx(httpCtx)
 	default:
