@@ -20,7 +20,7 @@ type Document struct {
 	BlobURLGetExpires string
 	ModifiedClient    string
 	Type              string
-	VissibleName      string
+	VisibleName       string
 	CurrentPage       int
 	Bookmarked        bool
 	Parent            string
@@ -29,7 +29,7 @@ type Document struct {
 type MetadataDocument struct {
 	ID             string
 	Parent         string
-	VissibleName   string
+	VisibleName    string
 	Type           string
 	Version        int
 	ModifiedClient string
@@ -91,7 +91,7 @@ func CreateDirDocument(parent, name string) MetadataDocument {
 	return MetadataDocument{
 		ID:             id.String(),
 		Parent:         parent,
-		VissibleName:   name,
+		VisibleName:    name,
 		Type:           DirectoryType,
 		Version:        1,
 		ModifiedClient: time.Now().UTC().Format(time.RFC3339Nano),
@@ -117,7 +117,7 @@ func CreateUploadDocumentMeta(id string, entryType, parent, name string) Metadat
 	return MetadataDocument{
 		ID:             id,
 		Parent:         parent,
-		VissibleName:   name,
+		VisibleName:    name,
 		Type:           entryType,
 		Version:        1,
 		ModifiedClient: time.Now().UTC().Format(time.RFC3339Nano),
@@ -128,7 +128,7 @@ func (meta MetadataDocument) ToDocument() Document {
 	return Document{
 		ID:             meta.ID,
 		Parent:         meta.Parent,
-		VissibleName:   meta.VissibleName,
+		VisibleName:    meta.VisibleName,
 		Type:           meta.Type,
 		Version:        1,
 		ModifiedClient: meta.ModifiedClient,
@@ -139,7 +139,7 @@ func (doc Document) ToMetaDocument() MetadataDocument {
 	return MetadataDocument{
 		ID:             doc.ID,
 		Parent:         doc.Parent,
-		VissibleName:   doc.VissibleName,
+		VisibleName:    doc.VisibleName,
 		Type:           doc.Type,
 		Version:        doc.Version,
 		ModifiedClient: time.Now().UTC().Format(time.RFC3339Nano),

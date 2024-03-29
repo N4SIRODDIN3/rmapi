@@ -47,13 +47,13 @@ func (d Document) String() string {
 // toRawDocument returns a technical rawDocument created from a public Document
 func (d Document) toRawDocument() rawDocument {
 	return rawDocument{
-		ID:           d.ID,
-		Version:      d.Version,
-		Type:         d.Type,
-		VissibleName: d.Name,
-		CurrentPage:  d.CurrentPage,
-		Bookmarked:   d.Bookmarked,
-		Parent:       d.Parent,
+		ID:          d.ID,
+		Version:     d.Version,
+		Type:        d.Type,
+		VisibleName: d.Name,
+		CurrentPage: d.CurrentPage,
+		Bookmarked:  d.Bookmarked,
+		Parent:      d.Parent,
 	}
 }
 

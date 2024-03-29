@@ -23,9 +23,9 @@ func (ctx *FileTreeCtx) Clear() {
 
 func CreateFileTreeCtx() FileTreeCtx {
 	root := model.CreateNode(model.Document{
-		ID:           "",
-		Type:         "CollectionType",
-		VissibleName: "/",
+		ID:          "",
+		Type:        "CollectionType",
+		VisibleName: "/",
 	})
 
 	return FileTreeCtx{
@@ -97,7 +97,7 @@ func (ctx *FileTreeCtx) MoveNode(src, dst *model.Node) {
 		return
 	}
 
-	src.Document.VissibleName = dst.Document.VissibleName
+	src.Document.VisibleName = dst.Document.VisibleName
 	src.Document.Version = dst.Document.Version
 	src.Document.ModifiedClient = dst.Document.ModifiedClient
 

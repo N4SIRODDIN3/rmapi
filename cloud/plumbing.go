@@ -20,7 +20,7 @@ type rawDocument struct {
 	BlobURLPutExpires string `json:"BlobURLPutExpires"`
 	ModifiedClient    string `json:"ModifiedClient"`
 	Type              string `json:"Type"`
-	VissibleName      string `json:"VissibleName"`
+	VisibleName       string `json:"VisibleName"`
 	CurrentPage       int    `json:"CurrentPage"`
 	Bookmarked        bool   `json:"Bookmarked"`
 	Parent            string `json:"Parent"`
@@ -33,7 +33,7 @@ func (r rawDocument) toDocument() Document {
 		ID:          r.ID,
 		Version:     r.Version,
 		Type:        r.Type,
-		Name:        r.VissibleName,
+		Name:        r.VisibleName,
 		CurrentPage: r.CurrentPage,
 		Bookmarked:  r.Bookmarked,
 		Parent:      r.Parent,

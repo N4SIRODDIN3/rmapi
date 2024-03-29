@@ -39,7 +39,7 @@ func (ctx *ApiCtx) Nuke() error {
 	}
 
 	for _, d := range documents {
-		log.Info.Println("Deleting: ", d.VissibleName)
+		log.Info.Println("Deleting: ", d.VisibleName)
 
 		err := ctx.Http.Put(transport.UserBearer, config.DeleteEntry, util.InSlice(d), nil)
 		if err != nil {
@@ -187,7 +187,7 @@ func (ctx *ApiCtx) MoveEntry(src, dstDir *model.Node, name string) (*model.Node,
 
 	metaDoc := src.Document.ToMetaDocument()
 	metaDoc.Version = metaDoc.Version + 1
-	metaDoc.VissibleName = name
+	metaDoc.VisibleName = name
 	metaDoc.Parent = dstDir.Id()
 
 	err := ctx.Http.Put(transport.UserBearer, config.UpdateStatus, util.InSlice(metaDoc), nil)
