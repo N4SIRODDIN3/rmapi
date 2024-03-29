@@ -38,14 +38,11 @@ type UserToken struct {
 type SyncVersion int
 
 const (
-	Version10 SyncVersion = 10
 	Version15 SyncVersion = 15
 )
 
 func (s SyncVersion) String() string {
 	switch s {
-	case Version10:
-		return "1.0"
 	case Version15:
 		return "1.5"
 	default:
@@ -72,7 +69,7 @@ func ParseToken(userToken string) (token *UserInfo, err error) {
 
 	token = &UserInfo{
 		User:        claims.Auth0.Email,
-		SyncVersion: Version10,
+		SyncVersion: Version15,
 	}
 
 	scopes := strings.Fields(claims.Scopes)
