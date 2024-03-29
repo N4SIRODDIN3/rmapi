@@ -5,6 +5,7 @@
 - Remove version 1.0 of the sync API
 - Add env variable `RMAPI_CACHE_DIR`
 - Use go 1.22
+- Divide the cache layout per sync version (1.5).
 
 ## rmapi 0.0.24 (December 30, 2022)
 

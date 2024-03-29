@@ -34,7 +34,12 @@ func HashEntries(entries []*Entry) (string, error) {
 func getCachedTreePath() (string, error) {
 	if cachedir := os.Getenv(cacheDirEnvVar); cachedir != "" {
 		log.Trace.Println("Using cache directory RMAPI_CACHE_DIR", cachedir)
-		cacheFile := path.Join(cachedir, ".tree")
+		rmapiFolder := path.Join(cachedir, "1.5")
+		err := os.MkdirAll(rmapiFolder, 0700)
+		if err != nil {
+			return "", err
+		}
+		cacheFile := path.Join(rmapiFolder, "tree")
 		return cacheFile, nil
 	}
 
@@ -42,12 +47,12 @@ func getCachedTreePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rmapiFolder := path.Join(cachedir, "rmapi")
+	rmapiFolder := path.Join(cachedir, "rmapi", "1.5")
 	err = os.MkdirAll(rmapiFolder, 0700)
 	if err != nil {
 		return "", err
 	}
-	cacheFile := path.Join(rmapiFolder, ".tree")
+	cacheFile := path.Join(rmapiFolder, "tree")
 	return cacheFile, nil
 }
 
