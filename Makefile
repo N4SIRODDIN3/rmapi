@@ -8,9 +8,10 @@ build:
 fmt:
 	@go fmt
 
+RMAPI_CACHE_DIR ?= $(PWD)/.run-cache
 run:
 	@if [ -n "$$INSIDE_EMACS" ]; then \
 	    go build; \
 	else \
-		go run main.go; \
+		RMAPI_CACHE_DIR=$(RMAPI_CACHE_DIR) go run main.go; \
 	fi

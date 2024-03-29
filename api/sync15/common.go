@@ -11,6 +11,10 @@ import (
 	"github.com/juruen/rmapi/log"
 )
 
+const (
+	cacheDirEnvVar          = "RMAPI_CACHE_DIR"
+)
+
 func HashEntries(entries []*Entry) (string, error) {
 	sort.Slice(entries, func(i, j int) bool { return entries[i].DocumentID < entries[j].DocumentID })
 	hasher := sha256.New()
@@ -28,6 +32,12 @@ func HashEntries(entries []*Entry) (string, error) {
 }
 
 func getCachedTreePath() (string, error) {
+	if cachedir := os.Getenv(cacheDirEnvVar); cachedir != "" {
+		log.Trace.Println("Using cache directory RMAPI_CACHE_DIR", cachedir)
+		cacheFile := path.Join(cachedir, ".tree")
+		return cacheFile, nil
+	}
+
 	cachedir, err := os.UserCacheDir()
 	if err != nil {
 		return "", err
