@@ -1,5 +1,10 @@
 ## rmapi master
 
+## rmapi 0.0.25 (Unreleased)
+
+- Remove version 1.0 of the sync API
+- Add env variable `RMAPI_CACHE_DIR`
+
 ## rmapi 0.0.24 (December 30, 2022)
 
 - Make sure Windows binaries have an exe extension (@juruen)
