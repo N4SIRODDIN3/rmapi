@@ -445,10 +445,6 @@ func DocumentsFileTree(tree *HashTree) *filetree.FileTreeCtx {
 		fileTree.AddDocument(d)
 	}
 
-	for _, d := range fileTree.Root().Children {
-		log.Trace.Println(d.Name(), d.IsFile())
-	}
-
 	return &fileTree
 }
 
