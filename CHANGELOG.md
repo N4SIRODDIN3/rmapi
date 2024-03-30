@@ -1,5 +1,9 @@
 ## rmapi master
 
+## Unreleased
+
+- Allow to pass the source directory in 'mput'.
+
 ## rmapi 0.0.26 (2024-03-29)
 
 - Remove version 1.0 of the sync API

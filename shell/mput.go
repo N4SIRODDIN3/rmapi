@@ -24,22 +24,27 @@ func mputCmd(ctx *ShellCtxt) *ishell.Cmd {
 				return
 			}
 
-			if argsLen > 1 {
+			if argsLen > 2 {
 				c.Err(errors.New(("too many arguments for command mput")))
 				return
 			}
 
-			// Past this point, the number of arguments is 1.
+			// Past this point, the number of arguments is 1 or 2.
+
+			var sourceDir string
+			if argsLen > 1 {
+				sourceDir = c.Args[1]
+			} else {
+				sourceDir = "./"
+			}
 
 			node, err := ctx.api.Filetree().NodeByPath(c.Args[0], ctx.node)
-
 			if err != nil || node.IsFile() {
 				c.Err(errors.New("remote directory does not exist"))
 				return
 			}
 
 			path, err := ctx.api.Filetree().NodeToPath(node)
-
 			if err != nil || node.IsFile() {
 				c.Err(errors.New("remote directory does not exist"))
 				return
@@ -55,7 +60,7 @@ func mputCmd(ctx *ShellCtxt) *ishell.Cmd {
 			ctx.node = node
 
 			c.Println()
-			err = putFilesAndDirs(ctx, c, "./", 0, &treeFormatStr)
+			err = putFilesAndDirs(ctx, c, sourceDir, 0, &treeFormatStr)
 			if err != nil {
 				c.Err(err)
 			}
