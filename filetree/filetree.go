@@ -30,8 +30,8 @@ func CreateFileTreeCtx() FileTreeCtx {
 		VisibleName: "/",
 	})
 	trash := model.CreateNode(model.Document{
-		ID:           TrashID,
-		Type:         "CollectionType",
+		ID:          TrashID,
+		Type:        "CollectionType",
 		VisibleName: "trash",
 	})
 	root.Children[TrashID] = &trash
