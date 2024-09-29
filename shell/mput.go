@@ -4,9 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
+	"flag"
+
 	"github.com/abiosoft/ishell"
+	"github.com/juruen/rmapi/log"
 	"github.com/juruen/rmapi/util"
 )
 
@@ -16,37 +20,40 @@ func mputCmd(ctx *ShellCtxt) *ishell.Cmd {
 		Help:      "recursively copy local files to remote directory",
 		Completer: createFsEntryCompleter(),
 		Func: func(c *ishell.Context) {
+			flagSet := flag.NewFlagSet("mput", flag.ContinueOnError)
+			src := flagSet.String("src", "", "source dir")
 
-			argsLen := len(c.Args)
+			if err := flagSet.Parse(c.Args); err != nil {
+				if err != flag.ErrHelp {
+					c.Err(err)
+				}
+				return
+			}
+			argRest := flagSet.Args()
+			argsLen := len(argRest)
+			srcDir := "./"
+			if *src != "" {
+				srcDir = *src
+			}
 
 			if argsLen == 0 {
 				c.Err(errors.New(("missing destination dir")))
 				return
 			}
 
-			if argsLen > 2 {
-				c.Err(errors.New(("too many arguments for command mput")))
-				return
-			}
+			dst := argRest[0]
+			fmt.Println("dest:", dst)
 
-			// Past this point, the number of arguments is 1 or 2.
+			node, err := ctx.api.Filetree().NodeByPath(dst, ctx.node)
 
-			var sourceDir string
-			if argsLen > 1 {
-				sourceDir = c.Args[1]
-			} else {
-				sourceDir = "./"
-			}
-
-			node, err := ctx.api.Filetree().NodeByPath(c.Args[0], ctx.node)
 			if err != nil || node.IsFile() {
-				c.Err(errors.New("remote directory does not exist"))
+				c.Err(err)
 				return
 			}
 
 			path, err := ctx.api.Filetree().NodeToPath(node)
 			if err != nil || node.IsFile() {
-				c.Err(errors.New("remote directory does not exist"))
+				c.Err(err)
 				return
 			}
 
@@ -60,7 +67,8 @@ func mputCmd(ctx *ShellCtxt) *ishell.Cmd {
 			ctx.node = node
 
 			c.Println()
-			err = putFilesAndDirs(ctx, c, sourceDir, 0, &treeFormatStr)
+
+			err = putFilesAndDirs(ctx, c, srcDir, 0, &treeFormatStr)
 			if err != nil {
 				c.Err(err)
 			}
@@ -121,9 +129,7 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 		pC.Println(pCtx.path)
 	}
 
-	os.Chdir(localDir) // Change to the local source directory.
-
-	wd, _ := os.Getwd()
+	wd := localDir
 	dirList, err := os.ReadDir(wd)
 
 	if err != nil {
@@ -134,14 +140,13 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 	lSize := len(dirList)
 	for index, d := range dirList {
 		name := d.Name()
+		notify := true
 
 		if !pCtx.useHiddenFiles && strings.HasPrefix(d.Name(), ".") {
 			continue
 		}
 
-		switch mode := d.Type(); {
-		case mode.IsDir():
-
+		if d.IsDir() {
 			// Is a directory. Create directory and make a recursive call.
 			_, err := pCtx.api.Filetree().NodeByPath(name, pCtx.node)
 
@@ -149,7 +154,7 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 				// Directory does not exist. Create directory.
 				treeFormat(pC, depth, index, lSize, tFS)
 				pC.Printf("creating directory [%s]...", name)
-				doc, err := pCtx.api.CreateDir(pCtx.node.Id(), name, false)
+				doc, err := pCtx.api.CreateDir(pCtx.node.Id(), name, notify)
 
 				if err != nil {
 					pC.Err(errors.New(fmt.Sprint("failed to create directory", err)))
@@ -168,16 +173,17 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 			// or renames the directory meanwhile.
 
 			node, _ := pCtx.api.Filetree().NodeByPath(name, pCtx.node)
-			path, _ := pCtx.api.Filetree().NodeToPath(node)
+			pathToNode, _ := pCtx.api.Filetree().NodeToPath(node)
 
 			// Back up current remote location.
 			currCtxPath := pCtx.path
 			currCtxNode := pCtx.node
 
-			pCtx.path = path
+			pCtx.path = pathToNode
 			pCtx.node = node
 
-			err = putFilesAndDirs(pCtx, pC, name, depth+1, tFS)
+			subfolder := path.Join(localDir, name)
+			err = putFilesAndDirs(pCtx, pC, subfolder, depth+1, tFS)
 			if err != nil {
 				return err
 			}
@@ -185,10 +191,9 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 			// Reset.
 			pCtx.path = currCtxPath
 			pCtx.node = currCtxNode
-
-		case mode.IsRegular():
-
+		} else if d.Type().IsRegular() {
 			docName, ext := util.DocPathToName(name)
+			log.Trace.Printf("docname '%s'", name)
 
 			if !util.IsFileTypeSupported(ext) {
 				continue
@@ -204,10 +209,12 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 				// Document does not exist.
 				treeFormat(pC, depth, index, lSize, tFS)
 				pC.Printf("uploading: [%s]...", name)
-				doc, err := pCtx.api.UploadDocument(pCtx.node.Id(), name, false)
+
+				fullName := path.Join(localDir, name)
+				doc, err := pCtx.api.UploadDocument(pCtx.node.Id(), fullName, false)
 
 				if err != nil {
-					pC.Err(fmt.Errorf("failed to upload file %s", name))
+					pC.Err(fmt.Errorf("failed to upload file '%s', %v", name, err))
 				} else {
 					// Document uploaded successfully.
 					pC.Println(" complete")
@@ -215,10 +222,6 @@ func putFilesAndDirs(pCtx *ShellCtxt, pC *ishell.Context, localDir string, depth
 				}
 			}
 		}
-	}
-
-	if localDir != "./" {
-		os.Chdir("..")
 	}
 
 	return nil

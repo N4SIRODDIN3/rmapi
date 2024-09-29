@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- Allow to pass the source directory in 'mput'.
+- Merge from ddvk:
+  - fix sync api
+  - add rudimentary globbing for ls,rm
+  - add trash folder
+  - add orphaned files to root
 
 ## rmapi 0.0.26 (2024-03-29)
 

@@ -86,7 +86,9 @@ func SaveTokens(path string, tokens model.AuthTokens) {
 		log.Warning.Println("failed to marsha tokens", err)
 	}
 
-	if err := os.WriteFile(path, content, 0600); err != nil {
+	os.WriteFile(path, content, 0600)
+
+	if err != nil {
 		log.Warning.Println("failed to save config to", path)
 	}
 }

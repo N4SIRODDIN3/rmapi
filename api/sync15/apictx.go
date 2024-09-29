@@ -46,7 +46,7 @@ func CreateCtx(http *transport.HttpClientCtx) (*ApiCtx, error) {
 	}
 	err = cacheTree.Mirror(apiStorage, concurrent)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to mirror %v", err)
 	}
 	saveTree(cacheTree)
 	tree := DocumentsFileTree(cacheTree)
@@ -57,13 +57,13 @@ func (ctx *ApiCtx) Filetree() *filetree.FileTreeCtx {
 	return ctx.ft
 }
 
-func (ctx *ApiCtx) Refresh() error {
+func (ctx *ApiCtx) Refresh() (string, int64, error) {
 	err := ctx.hashTree.Mirror(ctx.blobStorage, concurrent)
 	if err != nil {
-		return err
+		return "", 0, err
 	}
 	ctx.ft = DocumentsFileTree(ctx.hashTree)
-	return nil
+	return ctx.hashTree.Hash, ctx.hashTree.Generation, nil
 }
 
 // Nuke removes all documents from the account
@@ -72,12 +72,8 @@ func (ctx *ApiCtx) Nuke() (err error) {
 		ctx.hashTree.Docs = nil
 		ctx.hashTree.Rehash()
 		return nil
-	})
-
-	if err != nil {
-		return
-	}
-	return ctx.SyncComplete()
+	}, true)
+	return err
 }
 
 // FetchDocument downloads a document given its ID and saves it locally into dstPath
@@ -99,7 +95,7 @@ func (ctx *ApiCtx) FetchDocument(docId, dstPath string) error {
 	defer w.Close()
 	for _, f := range doc.Files {
 		log.Trace.Println("fetching document: ", f.DocumentID)
-		blobReader, err := ctx.blobStorage.GetReader(f.Hash)
+		blobReader, err := ctx.blobStorage.GetReader(f.Hash, f.DocumentID)
 		if err != nil {
 			return err
 		}
@@ -173,7 +169,8 @@ func (ctx *ApiCtx) CreateDir(parentId, name string, notify bool) (*model.Documen
 		if err != nil {
 			return nil, err
 		}
-		err = ctx.blobStorage.UploadBlob(hashStr, reader)
+		err = ctx.blobStorage.UploadBlob(hashStr, f.Name, reader)
+		reader.Close()
 
 		if err != nil {
 			return nil, err
@@ -187,15 +184,15 @@ func (ctx *ApiCtx) CreateDir(parentId, name string, notify bool) (*model.Documen
 	if err != nil {
 		return nil, err
 	}
-	defer indexReader.Close()
-	err = ctx.blobStorage.UploadBlob(doc.Hash, indexReader)
+	// defer indexReader.Close()
+	err = ctx.blobStorage.UploadBlob(doc.Hash, addSchema(doc.DocumentID), indexReader)
 	if err != nil {
 		return nil, err
 	}
 
 	err = Sync(ctx.blobStorage, ctx.hashTree, func(t *HashTree) error {
 		return t.Add(doc)
-	})
+	}, notify)
 
 	if err != nil {
 		return nil, err
@@ -212,11 +209,11 @@ func (ctx *ApiCtx) CreateDir(parentId, name string, notify bool) (*model.Documen
 }
 
 // Sync applies changes to the local tree and syncs with the remote storage
-func Sync(b *BlobStorage, tree *HashTree, operation func(t *HashTree) error) error {
-	synccount := 0
+func Sync(b *BlobStorage, tree *HashTree, operation func(t *HashTree) error, notify bool) error {
+	syncTry := 0
 	for {
-		synccount++
-		if synccount > 10 {
+		syncTry++
+		if syncTry > 10 {
 			log.Error.Println("Something is wrong")
 			break
 		}
@@ -230,15 +227,16 @@ func Sync(b *BlobStorage, tree *HashTree, operation func(t *HashTree) error) err
 		if err != nil {
 			return err
 		}
-		err = b.UploadBlob(tree.Hash, indexReader)
+		err = b.UploadBlob(tree.Hash, addSchema("root"), indexReader)
 		if err != nil {
 			return err
 		}
-		defer indexReader.Close()
+		// TODO
+		// defer indexReader.Close()
 
 		log.Info.Println("updating root, old gen: ", tree.Generation)
 
-		newGeneration, err := b.WriteRootIndex(tree.Hash, tree.Generation)
+		newGeneration, err := b.WriteRootIndex(tree.Hash, tree.Generation, notify)
 
 		if err == nil {
 			log.Info.Println("wrote root, new gen: ", newGeneration)
@@ -262,19 +260,15 @@ func Sync(b *BlobStorage, tree *HashTree, operation func(t *HashTree) error) err
 }
 
 // DeleteEntry removes an entry: either an empty directory or a file
-func (ctx *ApiCtx) DeleteEntry(node *model.Node) error {
-	if node.IsDirectory() && len(node.Children) > 0 {
+func (ctx *ApiCtx) DeleteEntry(node *model.Node, recursive, notify bool) error {
+	if node.IsDirectory() && len(node.Children) > 0 && !recursive {
 		return errors.New("directory is not empty")
 	}
 
 	err := Sync(ctx.blobStorage, ctx.hashTree, func(t *HashTree) error {
 		return t.Remove(node.Document.ID)
-	})
-	if err != nil {
-		return err
-	}
-
-	return ctx.SyncComplete()
+	}, notify)
+	return err
 }
 
 // MoveEntry moves an entry (either a directory or a file)
@@ -292,7 +286,7 @@ func (ctx *ApiCtx) MoveEntry(src, dstDir *model.Node, name string) (*model.Node,
 		if err != nil {
 			return err
 		}
-		doc.Metadata.Version += 1
+		doc.Metadata.Version++
 		doc.Metadata.DocName = name
 		doc.Metadata.Parent = dstDir.Id()
 		doc.Metadata.MetadataModified = true
@@ -311,7 +305,7 @@ func (ctx *ApiCtx) MoveEntry(src, dstDir *model.Node, name string) (*model.Node,
 			return err
 		}
 
-		err = ctx.blobStorage.UploadBlob(hashStr, reader)
+		err = ctx.blobStorage.UploadBlob(hashStr, doc.DocumentID, reader)
 
 		if err != nil {
 			return err
@@ -322,15 +316,10 @@ func (ctx *ApiCtx) MoveEntry(src, dstDir *model.Node, name string) (*model.Node,
 		if err != nil {
 			return err
 		}
-		defer indexReader.Close()
-		return ctx.blobStorage.UploadBlob(doc.Hash, indexReader)
-	})
+		// defer indexReader.Close()
+		return ctx.blobStorage.UploadBlob(doc.Hash, addSchema(doc.DocumentID), indexReader)
+	}, true)
 
-	if err != nil {
-		return nil, err
-	}
-
-	err = ctx.SyncComplete()
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +377,7 @@ func (ctx *ApiCtx) UploadDocument(parentId string, sourceDocPath string, notify 
 		if err != nil {
 			return nil, err
 		}
-		err = ctx.blobStorage.UploadBlob(hashStr, reader)
+		err = ctx.blobStorage.UploadBlob(hashStr, fileEntry.DocumentID, reader)
 
 		if err != nil {
 			return nil, err
@@ -402,24 +391,18 @@ func (ctx *ApiCtx) UploadDocument(parentId string, sourceDocPath string, notify 
 	if err != nil {
 		return nil, err
 	}
-	defer indexReader.Close()
-	err = ctx.blobStorage.UploadBlob(doc.Hash, indexReader)
+	// defer indexReader.Close()
+	err = ctx.blobStorage.UploadBlob(doc.Hash, addSchema(doc.DocumentID), indexReader)
 	if err != nil {
 		return nil, err
 	}
 
 	err = Sync(ctx.blobStorage, ctx.hashTree, func(t *HashTree) error {
 		return t.Add(doc)
-	})
+	}, notify)
 
 	if err != nil {
 		return nil, err
-	}
-	if notify {
-		err = ctx.SyncComplete()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return doc.ToDocument(), nil
@@ -442,8 +425,10 @@ func DocumentsFileTree(tree *HashTree) *filetree.FileTreeCtx {
 	fileTree := filetree.CreateFileTreeCtx()
 
 	for _, d := range documents {
+		log.Trace.Println("adding doc: ", d.ID)
 		fileTree.AddDocument(d)
 	}
+	fileTree.FinishAdd()
 
 	return &fileTree
 }

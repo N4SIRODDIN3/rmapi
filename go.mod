@@ -12,6 +12,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.5.1
 	github.com/unidoc/unipdf/v3 v3.6.1
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.2.8
 )
@@ -30,6 +31,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/ogier/pflag v0.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/image v0.5.0 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect

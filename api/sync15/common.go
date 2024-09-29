@@ -52,7 +52,7 @@ func getCachedTreePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cacheFile := path.Join(rmapiFolder, "tree")
+	cacheFile := path.Join(rmapiFolder, "tree.cache")
 	return cacheFile, nil
 }
 
@@ -71,11 +71,11 @@ func loadTree() (*HashTree, error) {
 		}
 		err = json.Unmarshal(b, tree)
 		if err != nil {
-			log.Error.Println("cache corrupt")
+			log.Error.Println("cache corrupt, resyncing")
 			return tree, nil
 		}
 		if tree.CacheVersion != cacheVersion {
-			log.Info.Println("wrong cache file version, resync")
+			log.Info.Println("wrong cache file version, resyncing")
 			return &HashTree{}, nil
 		}
 	}
@@ -84,6 +84,7 @@ func loadTree() (*HashTree, error) {
 	return tree, nil
 }
 
+// save cached version of the tree
 func saveTree(tree *HashTree) error {
 	cacheFile, err := getCachedTreePath()
 	log.Info.Println("Writing cache: ", cacheFile)

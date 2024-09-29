@@ -1,6 +1,6 @@
 # rMAPI
 
-This is (recent) fork of the original [rMAPI](https://github.com/juruen/rmapi)
+This is a (recent) fork of the original [rMAPI](https://github.com/juruen/rmapi)
 which is now [unmantained](https://github.com/juruen/rmapi/discussions/313).
 While I won't claim that I will keep this up-to-date, I will try to do my best
 *until a good alternative* is out there.  I have a big library of books and
