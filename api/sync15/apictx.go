@@ -386,7 +386,7 @@ func (ctx *ApiCtx) UploadDocument(parentId string, sourceDocPath string, notify 
 		doc.AddFile(fileEntry)
 	}
 
-	log.Info.Println("Uploading new doc index...", doc.Hash)
+	log.Info.Printf("Uploading new doc index...%s, size: %d", doc.Hash, doc.Size)
 	indexReader, err := doc.IndexReader()
 	if err != nil {
 		return nil, err
@@ -425,7 +425,7 @@ func DocumentsFileTree(tree *HashTree) *filetree.FileTreeCtx {
 	fileTree := filetree.CreateFileTreeCtx()
 
 	for _, d := range documents {
-		log.Trace.Println("adding doc: ", d.ID)
+		log.Trace.Printf("adding: %s docid: %s ", d.Name, d.ID)
 		fileTree.AddDocument(d)
 	}
 	fileTree.FinishAdd()

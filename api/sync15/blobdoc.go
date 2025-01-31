@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"sort"
 	"strconv"
@@ -63,6 +64,7 @@ func (d *BlobDoc) MetadataHashAndReader() (hash string, reader io.Reader, err er
 	for _, f := range d.Files {
 		if strings.HasSuffix(f.DocumentID, ".metadata") {
 			f.Hash = hash
+			f.Size = int64(len(jsn))
 			found = true
 			break
 		}
@@ -76,6 +78,11 @@ func (d *BlobDoc) MetadataHashAndReader() (hash string, reader io.Reader, err er
 
 func (d *BlobDoc) AddFile(e *Entry) error {
 	d.Files = append(d.Files, e)
+	size := int64(0)
+	for _, f := range d.Files {
+		size += f.Size
+	}
+	d.Size = size
 	return d.Rehash()
 }
 
@@ -144,7 +151,7 @@ func (d *BlobDoc) Line() string {
 	numFilesStr := strconv.Itoa(len(d.Files))
 	sb.WriteString(numFilesStr)
 	sb.WriteRune(Delimiter)
-	sb.WriteString("0")
+	sb.WriteString(strconv.FormatInt(d.Size, 10))
 	return sb.String()
 }
 
@@ -158,7 +165,7 @@ func (d *BlobDoc) Mirror(e *Entry, r RemoteStorage) error {
 	defer entryIndex.Close()
 	entries, err := parseIndex(entryIndex)
 	if err != nil {
-		return err
+		return fmt.Errorf("blobdoc index error %v", err)
 	}
 
 	head := make([]*Entry, 0)
@@ -213,7 +220,7 @@ func (d *BlobDoc) ToDocument() *model.Document {
 	}
 	return &model.Document{
 		ID:             d.DocumentID,
-		VisibleName:    d.Metadata.DocName,
+		Name:           d.Metadata.DocName,
 		Version:        d.Metadata.Version,
 		Parent:         d.Metadata.Parent,
 		Type:           d.Metadata.CollectionType,
