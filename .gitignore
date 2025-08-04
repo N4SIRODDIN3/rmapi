@@ -19,3 +19,4 @@ test_writer.zip
 .vscode/
 
 .run-cache
+.env
